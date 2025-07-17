@@ -57,3 +57,64 @@ print("Validated devices:")
 for device in valid_devices:
     print(f"IP: {device['ip_address']}, Device Type: {device['device_type']}, Prompt: {device['prompt']}")
 
+# Function to insert data into sqlite database from valid_devices
+def insert_into_database(valid_devices):
+    """Insert valid device information into the database."""
+    import sqlite3
+
+    # Connect to the SQLite database (or create it if it doesn't exist)
+    conn = sqlite3.connect('devices.db')
+    cursor = conn.cursor()
+
+    # Create table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS devices (
+            ip_address TEXT,
+            device_type TEXT,
+            prompt TEXT
+        )
+    ''')
+
+    # Insert valid if not in table
+    for device in valid_devices:
+        cursor.execute('''
+            INSERT INTO devices (ip_address, device_type, prompt)
+            VALUES (?, ?, ?)
+        ''', (device['ip_address'], device['device_type'], device['prompt']))
+
+    # Commit changes and close the connection
+    conn.commit()
+    conn.close()
+    print("Device information inserted into database.")
+
+# Insert valid devices into the database
+insert_into_database(valid_devices)
+
+# Read data from the database to get more commands for further processing
+def read_from_database():
+    """Read device information from the database."""
+    import sqlite3
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect('devices.db')
+    cursor = conn.cursor()
+
+    # Query to select all devices
+    cursor.execute('SELECT * FROM devices')
+    rows = cursor.fetchall()    
+
+    # Print the device information
+    for row in rows:
+        print(f"IP: {row[0]}, Device Type: {row[1]}, Prompt: {row[2]}")
+
+    # Close the connection
+    conn.close()
+    return rows
+
+valid_devices = read_from_database
+print("Retrieved valid devices from database:")
+for device in valid_devices():
+    print(f"IP: {device[0]}, Device Type: {device[1]}, Prompt: {device[2]}")
+
+# End of script 
+print("Script completed successfully.")
