@@ -10,13 +10,15 @@ from paramiko.ssh_exception import SSHException
 devices = [{"ip_address":"10.225.236.130",
            "device_type":"cisco_xr",},
            ]
+
+valid_devices = []
+
 # Function to get logging credentials for ssh access
 def get_login_credentials():
     """Get username and password for SSH access to router devices securely."""
     username = input("Enter username: ")
     password = getpass.getpass("Enter password: ")
     return username, password
-
 
 # Function to validate availability of devices using Netmiko validate the connection to each device getting the prompt
 def validate_devices(devices, username, password):
@@ -30,10 +32,13 @@ def validate_devices(devices, username, password):
                 password=password
             )
             print(f"Connection to {device['ip_address']} successful.")
-
             prompt = connection.find_prompt().strip('>%$#')
+            if ":" in prompt:
+                prompt = prompt.split(":")[1].strip()
+            else:
+                pass           
+            valid_devices.append({"ip_address": device["ip_address"], "device_type":device["device_type"],"prompt": prompt})
             print(f"Device prompt: {prompt}")
-            
             connection.disconnect()
 
         except NetMikoTimeoutException:
@@ -42,10 +47,13 @@ def validate_devices(devices, username, password):
                 print(f"Failed to connect to {device['ip_address']}: Authentication Exception")
         except SSHException:
                 print(f"Failed to connect to {device['ip_address']}: SSH Exception")
-        except Exception as e:
-                print(f"Failed to connect to {device['ip_address']}: {e}")
+        except Exception as error:
+                print(f"Failed to connect to {device['ip_address']}: {error}")
 
 # get user and password for ssh access
 username, password = get_login_credentials()
 validate_devices(devices, username, password)
+print("Validated devices:")
+for device in valid_devices:
+    print(f"IP: {device['ip_address']}, Device Type: {device['device_type']}, Prompt: {device['prompt']}")
 
